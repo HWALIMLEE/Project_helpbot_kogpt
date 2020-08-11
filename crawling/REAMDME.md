@@ -1,12 +1,12 @@
-## Chatbot Data
-# Data Crawling
+# Chatbot Data
+## Data Crawling
 - Naver 지식in  데이터 중 청소년 고민상담 크롤링
 
-# Data description
+## Data description
 1. 네이버 지식인 데이터 중 청소년 고민상담 데이터 5000개
 2. 여성가족부. 한국청소년상담복지개발원이 답변한 데이터만을 수집
 
-# Example
+## Example
 |Q|A|label|
 |---------|---------|---------|
 |그 친구랑 좀 다퉜는데 싸운날이 시험기간이라서...|시험기간이어서 시험이 끝난 이후에 대화를 하기로 서로 얘기를|0|
