@@ -19,15 +19,8 @@
 ## How to Train
 - pytorch
 - %cd KoGPT2-chatbot  # KoGPT2-chatbot폴더로 이동
-'''
-
-CUDA_VISIBLE_DEVICES=0 python train_torch.py --gpus 1 --train --max_epochs 100
-
-'''
+> CUDA_VISIBLE_DEVICES=0 python train_torch.py --gpus 1 --train --max_epochs 100
 
 ## How to Chat!
-'''
+> CUDA_VISIBLE_DEVICES=0 python train_torch.py --gpus 1 --chat
 
-CUDA_VISIBLE_DEVICES=0 python train_torch.py --gpus 1 --chat
-
-'''
