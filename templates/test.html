@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+        고민상담 HelpBot
+    </title>
+	<style type="text/css">
+		a:link {color: black; text-decoration: none;}
+		a:visited {color: black; text-decoration: none;}
+		a:hover {color: blue; text-decoration: underline;}
+	</style>
+</head>
+<body leftmargin="20">
+    <form method="get" action="/">
+        <h1> 고민상담 HelpBot </h1>
+        <br>
+        <input type="text" name="text" style='font-size:12pt;width:500px; height:24px;padding-left:6px' autofocus>
+        <button type="submit" style="width:60pt;height:24pt">입력</button>
+    </form>
+    <br>
+    <div style='width:700px'>
+    	<h3>질문:</h3>
+        <p>
+            {% if question != None %}
+                {{question}} <!--변수-->
+            {% endif %}
+		</p>
+		<h3>대답:</h3>
+        <p>
+            {% if answer != None %}
+                {{answer}} <!--변수-->
+            {% endif %}
+		</p>
+    </div>
+    <!--<br>
+    <hr width="700" align="left">
+    <br><br>
+    <div>
+    	<h3>&lt; 일정 &gt;</h3>
+    	<ul style="line-height:200%">
+    		<li>
+		    	<a href="./?text=내일 아침 9시부터 모레 저녁 6시까지 제주도 출장이라고 일정 추가해">
+		    		내일 아침 9시부터 모레 저녁 6시까지 제주도 출장이라고 일정 추가해
+		    	</a>
+    		<li>
+		    	<a href="./?text=친구하고 송별회 약속있으니까 12월 31일 오후 7시에 일정 저장">
+		    		친구하고 송별회 약속있으니까 12월 31일 오후 7시에 일정 저장
+		    	</a>
+    		<li>
+		    	<a href="./?text=오후 11시 50분부터 23시 55분까지 친구 만난다고 추가해줄래?">
+		    		오후 11시 50분부터 23시 55분까지 친구 만난다고 추가해줄래?  
+		    	</a>
+    		<li>
+		    	<a href="./?text=열한시십분전에일정추가">
+		    		열한시십분전에일정추가  
+		    	</a>
+    		<li>
+		    	<a href="./?text=다음주 목요일 새벽 3시에 스케줄 저장해">
+		    		다음주 목요일 새벽 3시에 스케줄 저장해  
+		    	</a>
+    		<li>
+		    	<a href="./?text=다음주 화요일 오후1시에서 목요일 저녁9시까지 미팅있다고 추가해">
+		    		다음주 화요일 오후1시에서 목요일 저녁9시까지 미팅있다고 추가해  
+		    	</a>
+    		<li>
+		    	<a href="./?text=저녁 10시부터 30분동안 야식먹는다고 저장">
+		    		저녁 10시부터 30분동안 야식먹는다고 저장  
+		    	</a>
+    		<li>
+		    	<a href="./?text=일정 설정">
+		    		일정 설정  
+		    	</a>
+    		<li>
+		    	<a href="./?text=영화본다고 일정 추가해">
+		    		영화본다고 일정 추가해  
+		    	</a>
+    		<li>
+		    	<a href="./?text=12월 25일 일정 추가">
+		    		12월 25일 일정 추가  
+		    	</a>
+    		<li>
+		    	<a href="./?text=일정 보여줘">
+		    		일정 보여줘  
+		    	</a>
+		</ul>
+    </div>
+    <br>
+    <div>
+    	<h3>&lt; 알람 &gt;</h3>
+    	<ul style="line-height:200%">
+    		<li>
+		    	<a href="./?text=오전 7시에 알람 맞출래">
+		    		오전 7시에 알람 맞출래
+		    	</a>
+    		<li>
+		    	<a href="./?text=10분 이따 깨워줘">
+		    		10분 이따 깨워줘
+		    	</a>
+    		<li>
+		    	<a href="./?text=두시간삼십분후에알람설정">
+		    		두시간삼십분후에알람설정
+		    	</a>
+    		<li>
+		    	<a href="./?text=새벽 3시 5분전에 알려줘">
+		    		새벽 3시 5분전에 알려줘
+		    	</a>
+    		<li>
+		    	<a href="./?text=알람 보여줘">
+		    		알람 보여줘
+		    	</a>
+		</ul>
+    </div>
+    <br>
+    <div>
+    	<h3>&lt; 날씨 &gt;</h3>
+    	<ul style="line-height:200%">
+    		<li>
+		    	<a href="./?text=제주도 날씨">
+		    		제주도 날씨
+		    	</a>
+    		<li>
+		    	<a href="./?text=서울 중구 날씨">
+		    		서울 중구 날씨
+		    	</a>
+    		<li>
+		    	<a href="./?text=인천 중구 날씨">
+		    		인천 중구 날씨
+		    	</a>
+    		<li>
+		    	<a href="./?text=청담동 지금 몇도야">
+		    		청담동 지금 몇도야
+		    	</a>
+    		<li>
+		    	<a href="./?text=용천리 날씨 알려줘">
+		    		용천리 날씨 알려줘
+		    	</a>
+    		<li>
+		    	<a href="./?text=현재 온도는?">
+		    		현재 온도는?
+		    	</a>
+		</ul>
+    </div>
+    <br>
+    <div>
+    	<h3>&lt; 뉴스 &gt;</h3>
+    	<ul style="line-height:200%">
+    		<li>
+		    	<a href="./?text=뉴스">
+		    		뉴스
+		    	</a>
+    		<li>
+		    	<a href="./?text=연예뉴스 알려줘">
+		    		연예뉴스 알려줘
+		    	</a>
+    		<li>
+		    	<a href="./?text=스포츠 뉴스 뭐있어?">
+		    		스포츠 뉴스 뭐있어?
+		    	</a>
+		</ul>
+    </div>
+    <br><br>-->
+</html>
