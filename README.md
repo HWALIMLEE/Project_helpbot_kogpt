@@ -15,7 +15,37 @@
 - pip install git+https://github.com/SKT-AI/KoGPT2#egg=kogpt2
 - git clone --recurse-submodules https://github.com/haven-jeon/KoGPT2-chatbot.git  # KoGPT2-chatbot 소스 코드 복사
 
-
+## How to Processing
+```
+for sentence in answer_list:
+        if '청소년사이버상담센터' in sentence:
+            answer_list.remove(sentence)
+    for sentence in answer_list:
+        if '채팅상담' in sentence:
+            answer_list.remove(sentence)
+    for sentence in answer_list:
+        if '=' in sentence:
+            answer_list.remove(sentence)
+    for sentence in answer_list:
+        if 'https://www' in sentence:
+            answer_list.remove(sentence)                     
+    for sentence in answer_list:
+        if "전화상담" in sentence:
+            answer_list.remove(sentence)
+    for sentence in answer_list:
+        if 'cyber' in sentence:
+            answer_list.remove(sentence) 
+    for sentence in answer_list:
+        if 'kr' in sentence:
+            answer_list.remove(sentence)
+    for sentence in answer_list:
+        if '컴슬러' in sentence:
+            answer_list.remove(sentence)
+    for sentence in answer_list:
+        if '24시간' in sentence:
+            answer_list.remove(sentence)
+    answer = " ".join(answer_list)
+```
 ## How to Train
 - pytorch
 - %cd KoGPT2-chatbot  # KoGPT2-chatbot폴더로 이동
@@ -44,3 +74,5 @@ Simsimi> 급해서 글을 남겼네요. 아르바이트는 원칙적으로 1년 
 따라서 시급은 1주일에 평균 60~80원입니다. 시급을 주지 않는 아르바이트는 원칙적으로 불법입니다. 따라서 시급을 주지 않는 아르바이트는 원칙적으로 일할 수 없답니다. 
 시급을 주지 않는 아르바이트는 원칙적으로 불법입니다. 따라서 원칙적으로 아르바이트를 하고자 하는
 ```
+## 웹으로 구현
+![image](https://user-images.githubusercontent.com/63282303/92410045-c108b200-f17d-11ea-9249-eb9ef311bc8c.png)
