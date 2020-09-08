@@ -49,6 +49,7 @@ for sentence in answer_list:
 ## How to Train
 - pytorch
 - %cd KoGPT2-chatbot  # KoGPT2-chatbot폴더로 이동
+- 고성능 컴퓨팅 사용
 ```
 CUDA_VISIBLE_DEVICES=0 python train_torch.py --gpus 1 --train --max_epochs 100
 ```
