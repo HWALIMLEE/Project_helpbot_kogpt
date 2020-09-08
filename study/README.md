@@ -9,4 +9,6 @@
 ## Khaiii의 등장
 - cnn모델 기반
 - rnn, lstm 은 순차적 계산으로 많은 계산량으로 인해 느림
+- 규칙과 확률이 아니라 **학습** 으로 품사 결정(데이터 기반-세종코퍼스)
 
+![image](https://user-images.githubusercontent.com/63282303/92452018-78daa580-f1f8-11ea-8445-cb54bdae55da.png)
