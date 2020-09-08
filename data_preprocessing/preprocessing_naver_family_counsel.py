@@ -61,5 +61,10 @@ print(data['A'][5])
 # 청소년 고민상담 + 가족 고민상담
 data1 = pd.read_csv(r'C:\Users\bitcamp\KoGPT2-chatbot\naver_worry_finally_0906_preprocessing_yes_null.csv',encoding='cp949') # 청소년 고민상담
 data2 = pd.read_csv(r'C:/Users/bitcamp/KoGPT2-chatbot/naver_family_counsel_0906_preprocessing_yes_null.csv', encoding='cp949') # 가족 고민상담
-data_all = data1+data2
+data_all = pd.concat([data1, data2])
 data_all.to_csv(r"C:/Users/bitcamp/KoGPT2-chatbot/worry_all_0906.csv",encoding='cp949')
+
+data_all_ = pd.read_csv(r"C:/Users/bitcamp/KoGPT2-chatbot/worry_all_0906.csv",encoding='cp949')
+print(len(data_all_))
+print(len(data1))
+print(len(data2))
