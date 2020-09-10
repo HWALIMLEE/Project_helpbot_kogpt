@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader, Dataset
 from transformers.optimization import AdamW, get_cosine_schedule_with_warmup
 import kss
 
-q = None
+ques = None
 ans = None
 
 parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
@@ -41,7 +41,7 @@ parser.add_argument('--sentiment',
 
 parser.add_argument('--model_params', # type은 str
                     type=str,
-                    default=r'C:/Users/bitcamp/KoGPT2-chatbot/model_chp/model_epoch=86-loss=0.00.ckpt',
+                    default=r'D:/Project-1/model_all_preprocessing_0907epoch=52-loss=0.14.ckpt',
                     help='model binary for starting chat')
 
 parser.add_argument('--train',          # train없으면 False, 즉 실행 안하겠다.
@@ -221,7 +221,7 @@ class KoGPT2Chat(LightningModule): # pytorch lightning
         return torch.LongTensor(data), torch.LongTensor(mask), torch.LongTensor(label)
 
     def train_dataloader(self):
-        data = pd.read_csv('./naver_worry_finally_5000.csv',encoding='cp949')
+        data = pd.read_csv("./naver_worry_finally_0824_preprocess_yes_null.csv",encoding='cp949')
         self.train_set = CharDataset(data, self.tok_path, self.vocab, max_len=self.hparams.max_len) # self.hparams는 argument
         train_dataloader = DataLoader(
             self.train_set, batch_size=self.hparams.batch_size, num_workers=0,
@@ -229,20 +229,23 @@ class KoGPT2Chat(LightningModule): # pytorch lightning
         return train_dataloader
 
     def chat(self, sent='0'):
-        global q
+        global ques
         global ans
         self.tok_path
+        print("입력문장:",ques)
         tok = SentencepieceTokenizer(self.tok_path, num_best=0, alpha=0)
         sent_tokens = tok(sent)
         with torch.no_grad():
             while 1:
                 # q = input('user > ').strip()
+                q = ques
                 if q == 'quit':
                     break
                 q_tok = tok(q)
                 a = ''
                 a_tok = []
                 timeout = time.time() + 60
+                print(1)
                 while 1:
                     input_ids = torch.LongTensor([
                         self.vocab[U_TKN]] + self.vocab[q_tok] +
@@ -259,7 +262,9 @@ class KoGPT2Chat(LightningModule): # pytorch lightning
                     a += gen.replace('▁', ' ')
                     a_tok = tok(a)
                     if time.time() > timeout:
-                        break
+                        ans = "답변할 수 없습니다."
+                        break   
+                print(2)
                 answer_list = kss.split_sentences(a)[1:-2]
                 Simsimi_answer = "".join(answer_list)
                 sentence_list = Simsimi_answer.split('.')
@@ -270,17 +275,45 @@ class KoGPT2Chat(LightningModule): # pytorch lightning
                     for word in word_list:
                         if word.endswith('*님이')==True:
                             word_list[word_list.index(word)]= word.replace(word,"상담자님이")
+                    for word in word_list:
+                        if word.endswith("비공개님!")==True:
+                            word_list[word_list.index(word)] = word.replace(word,"상담자님")
                             # print(word)
-                        else:
-                            pass
+                    for word in word_list:
+                        if word.endswith('비공개님이')==True:
+                            word_list[word_list.index(word)]= word.replace(word,"상담자님이")
                     sentence = " ".join(word_list)
                     sentences.append(sentence)
+                for sentence in sentences:
+                    if '청소년사이버상담센터' in sentence:
+                            sentences.remove(sentence)
+                for sentence in sentences:
+                    if '채팅상담' in sentence:
+                        sentences.remove(sentence)
+                for sentence in sentences:
+                    if '=' in sentence:
+                        sentences.remove(sentence)
+                for sentence in sentences:
+                    if 'https://www.' in sentence:
+                        sentences.remove(sentence)                     
+                for sentence in sentences:
+                    if "전화상담" in sentence:
+                        sentences.remove(sentence)
+                for sentence in sentences:
+                    if 'cyber' in sentence:
+                        sentences.remove(sentence) 
+                for sentence in sentences:
+                    if 'kr' in sentence:
+                        sentences.remove(sentence)
                     # print(sentence)        
                 # print("Simsimi > ", ".".join(sentences))
-                for sent in sentences:
-                    ans+=sent
-
-
+                ans = ". ".join(sentences)
+                print("답변:", ans)
+                break
+                # for sent in sentences:
+                #     ans+=sent
+                # ans=a
+print(3)
 parser = KoGPT2Chat.add_model_specific_args(parser)
 parser = Trainer.add_argparse_args(parser)
 args = parser.parse_args()
@@ -295,24 +328,26 @@ app = Flask(__name__)
 #----------------------------------------------------
 @app.route("/")
 def show_page():
-    global q
+    global ques
     global ans
     #--------------------------------
     # 파라미터 설정
     #--------------------------------
     text = request.args.get("text")
+    print(text)
    
     #--------------------------------
     # 대답 구함
     #--------------------------------
     if text != None:
-        q = text
+        ques = text
+        ans = ans
         model = KoGPT2Chat.load_from_checkpoint(args.model_params)
         model.chat()
     else:
         answer = None
     
-    return render_template('test.html', question = text, answer = ans)
+    return render_template('index.html', question = ques, answer = ans)
 
 
 
@@ -321,6 +356,6 @@ def show_page():
 #----------------------------------------------------
 if __name__ == "__main__":
 
-    app.run(host='127.0.0.1', port = 5000, threaded=True)    
+    app.run(host='127.0.0.1', port = 8000, threaded=True,debug=True)    
 
 
