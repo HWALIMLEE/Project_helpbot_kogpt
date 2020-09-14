@@ -17,7 +17,7 @@
 
 ## How to Processing
 ```
-for sentence in answer_list:
+    for sentence in answer_list:
         if '청소년사이버상담센터' in sentence:
             answer_list.remove(sentence)
     for sentence in answer_list:
