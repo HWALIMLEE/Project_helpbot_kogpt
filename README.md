@@ -17,6 +17,7 @@
 
 ## How to Processing
 ```
+    # kss 문장 분리기 
     for sentence in answer_list:
         if '청소년사이버상담센터' in sentence:
             answer_list.remove(sentence)
@@ -49,7 +50,7 @@
 ## How to Train
 - pytorch
 - %cd KoGPT2-chatbot  # KoGPT2-chatbot폴더로 이동
-- 고성능 컴퓨팅 사용
+- 고성능 컴퓨팅 사용(NIPA지원)
 ```
 CUDA_VISIBLE_DEVICES=0 python train_torch.py --gpus 1 --train --max_epochs 100
 ```
@@ -57,10 +58,15 @@ CUDA_VISIBLE_DEVICES=0 python train_torch.py --gpus 1 --train --max_epochs 100
 ```
 CUDA_VISIBLE_DEVICES=0 python train_torch.py --gpus 1 --chat
 ```
+## Top-k & Top-p 적용
+```
+multinomial(probabilities,1)
+```
+
 ## Example
 ```
 user> 친구 사귀는 게 힘들어
-Simsimi> 고민 글을 올려주었네요. 그런데 친구가 비공개님을 힘들게 하고 있다고 생각되어져요. 친구가 비공개님을 힘들게 하는 행동을 하는 것이라면,
+Simsimi> 고민 글을 올려주었네요. 그런데 친구가 비공개님을 힘들게 하고 있다고 생각되어져요. 친구가 상담자님을 힘들게 하는 행동을 하는 것이라면,
 그 친구도 같이 힘들어지지 않을까요? 만약  둘이서만 잘 지내면 된다고 생각된다면 친구와 질문자님이 잘 지내지 않아도 된다고 생각해요.
 친구와 질문자님이 잘 지내지 않더라도 둘이서만 잘 지내면 된다고 생각해요. 
 
