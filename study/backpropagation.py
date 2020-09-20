@@ -12,7 +12,7 @@ g = random.uniform(-1,1)
 h = random.uniform(-1,1)
 i = random.uniform(-1,1)
 
-eta = 0.01
+eta = 0.0001
 
 def sigmoid(x):
     return 1.0/(1.0+math.exp(-x))
