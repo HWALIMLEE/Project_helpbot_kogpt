@@ -22,6 +22,8 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.utils.data import DataLoader, Dataset
 from transformers.optimization import AdamW, get_cosine_schedule_with_warmup
 import kss
+import torch
+import torch.nn.functional as F
 
 ques = None
 ans = None
@@ -41,7 +43,7 @@ parser.add_argument('--sentiment',
 
 parser.add_argument('--model_params', # type은 str
                     type=str,
-                    default=r'D:/Project-1/model_all_preprocessing_0907epoch=52-loss=0.14.ckpt',
+                    default=r'D:/KoGPT2-chatbot/model_chp\model_preprocessinglast.ckpt',
                     help='model binary for starting chat')
 
 parser.add_argument('--train',          # train없으면 False, 즉 실행 안하겠다.
@@ -227,6 +229,62 @@ class KoGPT2Chat(LightningModule): # pytorch lightning
             self.train_set, batch_size=self.hparams.batch_size, num_workers=0,
             shuffle=True, collate_fn=self._collate_fn)
         return train_dataloader
+    
+    def _top_k_top_p_filtering(self, logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
+        """ Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
+        Args:
+            logits: logits distribution shape (vocabulary size)
+            top_k >0: keep only top k tokens with highest probability (top-k filtering).
+            top_p >0.0: keep the top tokens with cumulative probability >= top_p (nucleus filtering).
+                Nucleus filtering is described in Holtzman et al. (http://arxiv.org/abs/1904.09751)
+    """
+
+        # assert logits.dim() == 1  # batch size 1 for now - could be updated for more but the code would be less clear
+
+        top_k = min(top_k, logits.size(-1))
+
+        # top_k먼저 적용하고 top_p 적용한다. 
+        if top_k > 0:
+            # Remove all tokens with a probability less than the last token of the top-k
+            indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None] 
+            logits[indices_to_remove] = filter_value
+
+            # print('torch.topk(logits, top_k) : {}\n'.format(torch.topk(logits, top_k))) # value, index값 반환
+            # print('torch.topk(logits, top_k)[0] : {}\n'.format(torch.topk(logits, top_k)[0])) # value값만 
+            # print("torch.topk.shape:",torch.topk(logits,top_k)[0].shape)
+
+            # ...은 이전 모든 축 고려(:을 여러번 쓰는 것과 동일)
+            # None이 있으면 리스트의 축을 그대로 유지
+            # print('torch.topk(logits, top_k)[0][..., -1, None] : {}\n'.format(torch.topk(logits, top_k)[0][..., -1, None])) # None안써주면 값으로 나옴(tensor로 만들기 위해서 None으로 하면 축을 그대로 유지)
+            # print('torch.topk(logits, top_k)[0][-1] : {}\n'.format(torch.topk(logits, top_k)[0][-1])) # tensor에서 값만 나오게 된다
+
+            # print('indices_to_remove : {}\n'.format(indices_to_remove))
+            # print('Top_K logits : {}\n'.format(logits))
+
+    
+        if top_p > 0.0:
+            sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+            # print('sorted_logits : {}\n'.format(sorted_logits))
+            # print('sorted_indices : {}\n'.format(sorted_indices))
+
+            cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)  # top_k와 top_p 동시에 쓰기 위해 softmax(top-k로 뽑고 나서 다시 확률 재정의)
+            # print('softmax : {}\n'.format(F.softmax(sorted_logits, dim=-1))) # 누적확률
+            # print('cumulative_probs : {}\n'.format(cumulative_probs))
+
+            # Remove tokens with cumulative probability above the threshold
+            sorted_indices_to_remove = cumulative_probs > top_p # 0.7 보다 큰 누적확률은 제거
+            # print('sorted_indices_to_remove : {}\n'.format(sorted_indices_to_remove))
+
+            # Shift the indices to the right to keep also the first token above the threshold
+            sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone() # top-p에서는 0.7 경계선도 포함하기 때문에 한칸 뒤로 미뤄준 후
+            # print('sorted_indices_to_remove[..., 1:] : {}\n'.format(sorted_indices_to_remove))
+
+            sorted_indices_to_remove[..., 0] = 0 # 앞에 False값 넣어준다. 
+            # print('sorted_indices_to_remove[..., 0] : {}\n'.format(sorted_indices_to_remove))
+
+            indices_to_remove = sorted_indices[sorted_indices_to_remove]
+            logits[indices_to_remove] = filter_value
+        return logits
 
     def chat(self, sent='0'):
         global ques
@@ -236,83 +294,101 @@ class KoGPT2Chat(LightningModule): # pytorch lightning
         tok = SentencepieceTokenizer(self.tok_path, num_best=0, alpha=0)
         sent_tokens = tok(sent)
         with torch.no_grad():
+            # q = input('user > ').strip()
+            q = ques
+            q_tok = tok(q)
+            a = ''
+            a_tok = []
+            timeout = time.time() + 60
+            print(1)
             while 1:
-                # q = input('user > ').strip()
-                q = ques
-                if q == 'quit':
+                input_ids = torch.LongTensor([
+                    self.vocab[U_TKN]] + self.vocab[q_tok] +
+                    self.vocab[EOS, SENT] + self.vocab[sent_tokens] +
+                    self.vocab[EOS, S_TKN] +
+                    self.vocab[a_tok]).unsqueeze(dim=0)
+                pred = self(input_ids)
+                pred = pred[0,-1,:]/0.3
+                gen = self._top_k_top_p_filtering(pred,top_k=10000,top_p=0.9)
+                probabilities = F.softmax(gen, dim=-1)
+                next_token = self.vocab.to_tokens(torch.multinomial(probabilities,1).numpy().tolist())[-1]
+                # gen = self.vocab.to_tokens(
+                #     torch.argmax(
+                #         pred,
+                #         dim=-1).squeeze().numpy().tolist())[-1]
+                if next_token == EOS:
                     break
-                q_tok = tok(q)
-                a = ''
-                a_tok = []
-                timeout = time.time() + 60
-                print(1)
-                while 1:
-                    input_ids = torch.LongTensor([
-                        self.vocab[U_TKN]] + self.vocab[q_tok] +
-                        self.vocab[EOS, SENT] + self.vocab[sent_tokens] +
-                        self.vocab[EOS, S_TKN] +
-                        self.vocab[a_tok]).unsqueeze(dim=0)
-                    pred = self(input_ids)
-                    gen = self.vocab.to_tokens(
-                        torch.argmax(
-                            pred,
-                            dim=-1).squeeze().numpy().tolist())[-1]
-                    if gen == EOS:
-                        break
-                    a += gen.replace('▁', ' ')
-                    a_tok = tok(a)
-                    if time.time() > timeout:
-                        ans = "답변할 수 없습니다."
-                        break   
-                print(2)
-                answer_list = kss.split_sentences(a)[1:-2]
-                Simsimi_answer = "".join(answer_list)
-                sentence_list = Simsimi_answer.split('.')
-                sentences=[]
-                for s in sentence_list:
-                    word_list = s.split()#리스트
-                    # sentences=[]
-                    for word in word_list:
-                        if word.endswith('*님이')==True:
-                            word_list[word_list.index(word)]= word.replace(word,"상담자님이")
-                    for word in word_list:
-                        if word.endswith("비공개님!")==True:
-                            word_list[word_list.index(word)] = word.replace(word,"상담자님")
-                            # print(word)
-                    for word in word_list:
-                        if word.endswith('비공개님이')==True:
-                            word_list[word_list.index(word)]= word.replace(word,"상담자님이")
-                    sentence = " ".join(word_list)
-                    sentences.append(sentence)
-                for sentence in sentences:
-                    if '청소년사이버상담센터' in sentence:
-                            sentences.remove(sentence)
-                for sentence in sentences:
-                    if '채팅상담' in sentence:
-                        sentences.remove(sentence)
-                for sentence in sentences:
-                    if '=' in sentence:
-                        sentences.remove(sentence)
-                for sentence in sentences:
-                    if 'https://www.' in sentence:
-                        sentences.remove(sentence)                     
-                for sentence in sentences:
-                    if "전화상담" in sentence:
-                        sentences.remove(sentence)
-                for sentence in sentences:
-                    if 'cyber' in sentence:
-                        sentences.remove(sentence) 
-                for sentence in sentences:
-                    if 'kr' in sentence:
-                        sentences.remove(sentence)
-                    # print(sentence)        
-                # print("Simsimi > ", ".".join(sentences))
-                ans = ". ".join(sentences)
-                print("답변:", ans)
-                break
-                # for sent in sentences:
-                #     ans+=sent
-                # ans=a
+                a += next_token.replace('▁', ' ')
+                a_tok = tok(a)
+                if time.time() > timeout:
+                    ans = "답변할 수 없습니다."
+                    break   
+            print(2)
+            answer_list = kss.split_sentences(a)[1:-2]
+            Simsimi_answer = "".join(answer_list)
+            sentence_list = Simsimi_answer.split('.')
+            sentences=[]
+            for s in sentence_list:
+                word_list = s.split()#리스트
+                # sentences=[]
+                for word in word_list:
+                    if word.endswith('*님이')==True:
+                        word_list[word_list.index(word)]= word.replace(word,"상담자님이")
+                    if word.endswith("*님!")==True:
+                        word_list[word_list.index(word)]= word.replace(word,"상담자님!")
+                    if word.endswith("비공개님!")==True:
+                        word_list[word_list.index(word)] = word.replace(word,"상담자님!")
+                    if word.endswith('비공개님이')==True:
+                        word_list[word_list.index(word)]= word.replace(word,"상담자님이")
+                    if word.endswith("비공개님을")==True:
+                        word_list[word_list.index(word)] = word.replace(word,'상담자님을')
+                    if word.endswith('비공개님과')==True:
+                        word_list[word_list.index(word)] = word.replace(word,'상담자님과')
+                    if word.endswith('비공개님은')==True:
+                        word_list[word_list.index(word)] = word.replace(word,'상담자님은')
+                    if word.endswith('비공개님의')==True:
+                        word_list[word_list.index(word)] = word.replace(word,'상담자님의')
+
+                sentence = " ".join(word_list)
+                sentences.append(sentence)
+            # ls = ['청소년사이버상담센터', '채팅상담', '=', 'https://www.', "전화상담", 'cyber', 'kr','cyber1388']
+            # for sentence in sentences:
+            #     for s in ls:
+            #         if s in sentence:
+            #             sentences.remove(sentence)
+                        
+            for sentence in sentences:
+                if '청소년사이버상담센터' in sentence:
+                    sentences.remove(sentence)
+            for sentence in sentences:
+                if '채팅상담' in sentence:
+                    sentences.remove(sentence)
+            for sentence in sentences:
+                if '=' in sentence:
+                    sentences.remove(sentence)
+            for sentence in sentences:
+                if 'https://www.' in sentence:
+                    sentences.remove(sentence)                     
+            for sentence in sentences:
+                if "전화상담" in sentence:
+                    sentences.remove(sentence)
+            for sentence in sentences:
+                if 'cyber' in sentence:
+                    sentences.remove(sentence) 
+            for sentence in sentences:
+                if 'kr' in sentence:
+                    sentences.remove(sentence)
+            for sentence in sentences:
+                if 'cyber1388' in sentence:
+                    sentences.remove(sentence)
+                
+                # print(sentence)        
+            # print("Simsimi > ", ".".join(sentences))
+            ans = ". ".join(sentences)
+            print("답변:", ans)
+            # for sent in sentences:
+            #     ans+=sent
+            # ans=a
 print(3)
 parser = KoGPT2Chat.add_model_specific_args(parser)
 parser = Trainer.add_argparse_args(parser)
@@ -356,6 +432,4 @@ def show_page():
 #----------------------------------------------------
 if __name__ == "__main__":
 
-    app.run(host='127.0.0.1', port = 8000, threaded=True,debug=True)    
-
-
+    app.run(host='127.0.0.1', port = 5000, threaded=True,debug=True)    
