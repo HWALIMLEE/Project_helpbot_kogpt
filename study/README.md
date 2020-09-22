@@ -1,21 +1,44 @@
-# 형태소 분석
-## 형태소와 어절
-### 형태소
-- 일정한 의미가 있는 가장 작은 말의 단위(즉, 더 분석하면 뜻이 없어지는 말의 단위)
+# MeCab설치
+##1. mecab-ko-msvc설치하기 'C 기반으로 만들어진 mecab'이 윈도우에서 실행될 수 있또록 하는 역할
+###1.1 링크 클릭https://github.com/Pusnow/mecab-ko-msvc/releases/tag/release-0.9.2-msvc-3
+###1.2 윈도우 버전에 따라 32bit/64bit 선택하여 다운로드
+###1.3 'C 드라이브'에 mecab폴더 만들기=>"C:/mecab"
 
-### 어절
-- 한국어에서 발음의 기본이 되는 단위(대개 띄어쓰기의 단위와 일치)
+##2. mecab-ko-dic-msvc.zip 기본사전 설치하기
+###2.1 링크 클릭https://github.com/Pusnow/mecab-ko-dic-msvc/releases/tag/mecab-ko-dic-2.1.1-20180720-msvc
+###2.2 사전다운로드 'mecab-ko-dic-msvc.zip'
+###2.3 앞서 '1-3'에서 만들었던 "C:/mecab"에 압축해제
 
-## Khaiii의 등장
-- cnn모델 기반
-- rnn, lstm 은 순차적 계산으로 많은 계산량으로 인해 느림
-- 규칙과 확률이 아니라 **학습** 으로 품사 결정(데이터 기반-세종코퍼스)
-
-![image](https://user-images.githubusercontent.com/63282303/92452018-78daa580-f1f8-11ea-8445-cb54bdae55da.png)
-
+##3. python wheel설치하기
+###3.1 링크 클릭 https://github.com/Pusnow/mecab-python-msvc/releases/tag/mecab_python-0.996_ko_0.9.2_msvc-2
+###3.2 파이썬 및 윈도우 버전에 맞는 whl 다운로드 mecab_python-0.996_ko_0.9.2_msvc-cp37-cp37m-win_amd64.whl
+###3.3 다운로드 받은 파일을 site-packages폴더에 옮겨놓기
+###3.2 python 사용자의 경우 cmd창에서 site-package 폴더로 이동하여 
 ```
-윈도우 : 2,3,4,5,7,10
-임베딩 : 20,30,40, 50, 70, 100, 150, 200, 300, 500
-Metric : F-score(정확도와 재현률의 조화 평균)
+pip install mecab_python-0.996_ko_0.9.2_msvc-cp37-cp37m-win_amd64.whl'
 ```
-### 30차원/ window_size=3 을 가장 많이 쓴다.
+
+##4. mecab 실행해보기
+###4.1 기본 소스 코드 넣어서 사용하기
+```
+import MeCab
+m = MeCab.Tagger()
+out = m.parse("미캅이 잘 설치되었는지 확인중입니다.")
+print(out)
+```
+###4.2 결과확인
+```
+미      NNP,인명,F,미,*,*,*,*
+캅      NNP,인명,T,캅,*,*,*,*
+이      JKS,*,F,이,*,*,*,*
+잘      MAG,*,T,잘,*,*,*,*
+설치    NNG,행위,F,설치,*,*,*,*
+되      XSV,*,F,되,*,*,*,*
+었      EP,*,T,었,*,*,*,*
+는지    EC,*,F,는지,*,*,*,*
+확인    NNG,행위,T,확인,*,*,*,*
+중      NNB,*,T,중,*,*,*,*
+입니다  VCP+EF,*,F,입니다,Inflect,VCP,EF,이/VCP/*+ᄇ니다/EF/*
+.       SF,*,*,*,*,*,*,*
+EOS
+```
